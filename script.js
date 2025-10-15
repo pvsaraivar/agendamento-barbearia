@@ -32,10 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedDate = dateInput.value;
         const selectedService = serviceInput.value;
 
+        // Se a data ou o serviço não estiverem selecionados, não faz nada.
         if (!selectedDate || !selectedService) {
             return;
         }
 
+        // Limpa mensagens de erro/sucesso anteriores
         // Mostra o loader e desabilita o select
         timeLoader.style.display = 'block';
         timeSelect.innerHTML = '<option>Carregando horários...</option>';
@@ -43,7 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = true;
 
         try {
-            // 1. Busca os horários já agendados no Google Script
+            // 1. Valida a URL antes de fazer a chamada
+            if (!scriptURL || !scriptURL.startsWith('https://script.google.com/')) {
+                throw new Error("URL do script inválida. Verifique a constante scriptURL.");
+            }
+
+            // 2. Busca os horários já agendados no Google Script
             const response = await fetch(`${scriptURL}?date=${selectedDate}`);
             const result = await response.json();
 
@@ -53,13 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const bookedSlotsData = result.data; // Array de objetos, ex: [{time: "10:00", service: "Corte de Cabelo"}]
 
-            // 2. Gera todos os slots possíveis para o dia
+            // 3. Gera todos os slots possíveis para o dia
             const allSlots = generateAllSlots(workingHours.start, workingHours.end, slotInterval);
 
-            // 3. Filtra os slots disponíveis
+            // 4. Filtra os slots disponíveis
             const serviceDuration = serviceDurations[selectedService];
-            
-            // CORREÇÃO: Garante que a duração do serviço é um número válido antes de prosseguir.
             if (typeof serviceDuration !== 'number') {
                 throw new Error("Duração do serviço inválida ou não selecionada.");
             }
@@ -68,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return isSlotAvailable(slot, serviceDuration, bookedSlotsData);
             });
 
-            // 4. Popula o select com os horários disponíveis
+            // 5. Popula o select com os horários disponíveis
             populateTimeSelect(availableSlots);
 
         } catch (error) {
@@ -95,28 +100,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isSlotAvailable(slot, duration, bookedSlotsData) {
-        const slotStart = new Date(`1970-01-01T${slot}:00`);
-        const slotEnd = new Date(slotStart.getTime() + duration * 60000);
+        const proposedStart = new Date(`1970-01-01T${slot}:00`);
+        const proposedEnd = new Date(proposedStart.getTime() + duration * 60000);
 
         // Verifica se o slot termina depois do horário de funcionamento
         const endOfWork = new Date(`1970-01-01T${workingHours.end}:00:00`);
-        if (slotEnd > endOfWork) {
+        if (proposedEnd > endOfWork) {
             return false;
         }
 
         // Verifica se o slot se sobrepõe a algum horário já agendado
         for (const bookedSlot of bookedSlotsData) {
-            const bookedStart = new Date(`1970-01-01T${bookedSlot.time}:00`);
-            
-            // CORREÇÃO: Garante que bookedSlot.service exista antes de tentar acessá-lo.
-            // Se o serviço não estiver na lista, assume a duração padrão do intervalo.
+            // Pula qualquer agendamento inválido que possa vir da planilha
+            if (!bookedSlot.time) continue;
+
+            const existingStart = new Date(`1970-01-01T${bookedSlot.time}:00`);
             const bookedDuration = (bookedSlot.service && serviceDurations[bookedSlot.service]) 
                                      ? serviceDurations[bookedSlot.service] 
                                      : slotInterval;
-            const bookedEnd = new Date(bookedStart.getTime() + bookedDuration * 60000);
+            const existingEnd = new Date(existingStart.getTime() + bookedDuration * 60000);
 
             // Condição de sobreposição: (StartA < EndB) and (EndA > StartB)
-            if (slotStart < bookedEnd && slotEnd > bookedStart) {
+            if (proposedStart < existingEnd && proposedEnd > existingStart) {
                 return false;
             }
         }
@@ -146,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         responseMessage.textContent = '';
         responseMessage.className = '';
 
-        // CORREÇÃO: Criando o FormData a partir do formulário no momento do envio.
         fetch(scriptURL, { method: 'POST', body: new FormData(form) })
             .then(response => response.json())
             .then(data => {
