@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Não foi possível buscar os horários.');
             }
 
-            const bookedTimes = result.data; // Array de strings, ex: ["10:00", "14:30"]
+            const bookedSlotsData = result.data; // Array de objetos, ex: [{time: "10:00", service: "Corte de Cabelo"}]
 
             // 2. Gera todos os slots possíveis para o dia
             const allSlots = generateAllSlots(workingHours.start, workingHours.end, slotInterval);
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 3. Filtra os slots disponíveis
             const serviceDuration = serviceDurations[selectedService];
             const availableSlots = allSlots.filter(slot => {
-                return isSlotAvailable(slot, serviceDuration, bookedTimes);
+                return isSlotAvailable(slot, serviceDuration, bookedSlotsData);
             });
 
             // 4. Popula o select com os horários disponíveis
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return slots;
     }
 
-    function isSlotAvailable(slot, duration, bookedTimes) {
+    function isSlotAvailable(slot, duration, bookedSlotsData) {
         const slotStart = new Date(`1970-01-01T${slot}:00`);
         const slotEnd = new Date(slotStart.getTime() + duration * 60000);
 
@@ -99,10 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Verifica se o slot se sobrepõe a algum horário já agendado
-        for (const booked of bookedTimes) {
-            const bookedStart = new Date(`1970-01-01T${booked}:00`);
-            const bookedService = "Corte de Cabelo"; // Precisaria saber o serviço para ter a duração exata
-            const bookedDuration = serviceDurations[bookedService] || slotInterval; // Assume duração padrão
+        for (const bookedSlot of bookedSlotsData) {
+            const bookedStart = new Date(`1970-01-01T${bookedSlot.time}:00`);
+            const bookedDuration = serviceDurations[bookedSlot.service] || slotInterval; // Usa a duração do serviço agendado
             const bookedEnd = new Date(bookedStart.getTime() + bookedDuration * 60000);
 
             // Condição de sobreposição: (StartA < EndB) and (EndA > StartB)
@@ -136,7 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
         responseMessage.textContent = '';
         responseMessage.className = '';
 
-        fetch(scriptURL, { method: 'POST', body: formData })
+        // CORREÇÃO: Criando o FormData a partir do formulário no momento do envio.
+        fetch(scriptURL, { method: 'POST', body: new FormData(form) })
             .then(response => response.json())
             .then(data => {
                 if (data.result === 'success') {
