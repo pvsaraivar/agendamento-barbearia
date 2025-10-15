@@ -29,13 +29,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     responseMessage.textContent = 'Agendamento realizado com sucesso! ✅';
                     responseMessage.classList.add('success');
                     form.reset(); // Limpa o formulário
+                    // Define a data mínima para o agendamento como hoje novamente após o reset
+                    document.getElementById('date').setAttribute('min', today);
                 } else {
+                    // Se o resultado for 'error', joga um erro com a mensagem vinda do script
                     throw new Error(data.message || 'Ocorreu um erro desconhecido.');
                 }
             })
             .catch(error => {
                 console.error('Erro!', error.message);
-                responseMessage.textContent = 'Ops! Algo deu errado. Tente novamente mais tarde.';
+                // Exibe a mensagem de erro específica retornada pelo script ou uma mensagem padrão
+                responseMessage.textContent = error.message || 'Ops! Algo deu errado. Tente novamente mais tarde.';
                 responseMessage.classList.add('error');
             })
             .finally(() => {

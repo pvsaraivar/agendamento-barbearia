@@ -3,10 +3,11 @@
 
 :root {
     --primary-color: #1a1a1a;
-    --secondary-color: #c5a47e;
+    --secondary-color: #d4af37; /* Um dourado um pouco mais vibrante */
     --text-color: #f0f0f0;
     --background-color: #0d0d0d;
     --input-bg-color: #2a2a2a;
+    --border-color: #444;
 }
 
 * {
@@ -17,7 +18,7 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    background-color: var(--background-color);
+    background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
     color: var(--text-color);
     display: flex;
     justify-content: center;
@@ -32,6 +33,7 @@ body {
     background-color: var(--primary-color);
     padding: 30px;
     border-radius: 10px;
+    border: 1px solid var(--border-color);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
@@ -61,7 +63,9 @@ header h1 {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
+    color: #aaa;
     font-size: 0.9rem;
+    transition: color 0.3s ease;
 }
 
 .form-group input,
@@ -69,16 +73,28 @@ header h1 {
     width: 100%;
     padding: 12px;
     background-color: var(--input-bg-color);
-    border: 1px solid #444;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
     color: var(--text-color);
     font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Melhora a visibilidade do texto de exemplo */
+.form-group input::placeholder {
+    color: #666;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+/* Muda a cor do label quando o input está focado */
+.form-group:focus-within label {
+    color: var(--secondary-color);
 }
 
 .form-group-inline {
@@ -102,11 +118,13 @@ button[type="submit"] {
     font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 button[type="submit"]:hover {
-    background-color: #e0b88a;
+    background-color: #e6c35c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 button[type="submit"]:disabled {
@@ -118,6 +136,8 @@ button[type="submit"]:disabled {
     margin-top: 20px;
     text-align: center;
     font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
 }
 
 #response-message.success {
