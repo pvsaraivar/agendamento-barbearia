@@ -58,6 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Filtra os slots disponíveis
             const serviceDuration = serviceDurations[selectedService];
+            
+            // CORREÇÃO: Garante que a duração do serviço é um número válido antes de prosseguir.
+            if (typeof serviceDuration !== 'number') {
+                throw new Error("Duração do serviço inválida ou não selecionada.");
+            }
+
             const availableSlots = allSlots.filter(slot => {
                 return isSlotAvailable(slot, serviceDuration, bookedSlotsData);
             });
@@ -101,7 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Verifica se o slot se sobrepõe a algum horário já agendado
         for (const bookedSlot of bookedSlotsData) {
             const bookedStart = new Date(`1970-01-01T${bookedSlot.time}:00`);
-            const bookedDuration = serviceDurations[bookedSlot.service] || slotInterval; // Usa a duração do serviço agendado
+            
+            // CORREÇÃO: Garante que bookedSlot.service exista antes de tentar acessá-lo.
+            // Se o serviço não estiver na lista, assume a duração padrão do intervalo.
+            const bookedDuration = (bookedSlot.service && serviceDurations[bookedSlot.service]) 
+                                     ? serviceDurations[bookedSlot.service] 
+                                     : slotInterval;
             const bookedEnd = new Date(bookedStart.getTime() + bookedDuration * 60000);
 
             // Condição de sobreposição: (StartA < EndB) and (EndA > StartB)
