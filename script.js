@@ -51,11 +51,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 2. Busca os horários já agendados no Google Script
-            const response = await fetch(`${scriptURL}?date=${selectedDate}`);
-            const result = await response.json();
+            const response = await fetch(`${scriptURL}?date=${selectedDate}`)
+                .catch(networkError => {
+                    throw new Error(`Erro de rede: ${networkError.message}`);
+                });
 
+            if (!response.ok) {
+                throw new Error(`Erro no servidor: ${response.status} ${response.statusText}`);
+            }
+
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("Resposta inesperada do servidor. Não é um JSON válido.");
+            }
+
+            const result = await response.json(); // Agora é seguro chamar .json()
             if (result.result !== 'success') {
-                throw new Error('Não foi possível buscar os horários.');
+                throw new Error(result.message || 'O script do Google retornou um erro.');
             }
 
             const bookedSlotsData = result.data; // Array de objetos, ex: [{time: "10:00", service: "Corte de Cabelo"}]
